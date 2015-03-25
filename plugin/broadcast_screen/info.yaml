@@ -1,0 +1,8 @@
+description: Broadcast the screen to external devices
+category: "Miscellaneous"
+controls:
+-
+    type: "editor"
+    var: "screens"
+    label: "Screens"
+    tooltip: "A specificatio of external screens"
