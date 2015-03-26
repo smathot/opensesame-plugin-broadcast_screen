@@ -20,14 +20,18 @@ along with OpenSesame.  If not, see <http://www.gnu.org/licenses/>.
 from openexp._canvas import legacy
 from libopensesame.exceptions import osexception
 from libopensesame import debug
+import random
 import pygame
 import socket
 import json
 import base64
 import time
+import zlib
+import threading
 
 screens = []
 _id = 0
+t00 = time.time()
 
 class broadcast(legacy.legacy):
 
@@ -37,12 +41,16 @@ class broadcast(legacy.legacy):
 		legacy.legacy.__init__(self, *args, **kwargs)
 		self.prepared = False
 		self.id = _id
+		self.threads = []
 		_id += 1
 
 	def prepare(self):
 
 		for screen in screens:
 			screen.prepare(self)
+			t = threading.Thread(target=screen.show, args=(self,))
+			self.threads.append(t)
+		random.shuffle(screens)
 		self.prepared = True
 		return legacy.legacy.prepare(self)
 
@@ -50,8 +58,8 @@ class broadcast(legacy.legacy):
 
 		if not self.prepared:
 			self.prepare()
-		for screen in screens:
-			screen.show(self)
+		for t in self.threads:
+			t.start()
 		return legacy.legacy.show(self)
 
 class screen(object):
@@ -80,14 +88,17 @@ class screen(object):
 		else:
 			w = self.w
 			h = self.h
-		data = base64.b64encode(pygame.image.tostring(_surface, 'RGB'))
+		data = pygame.image.tostring(_surface, 'RGB')
+		data = zlib.compress(data)
+		data = base64.b64encode(data)
 		d = {
-			'cmd'	: 'prepare',
-			'id'	: canvas.id,
-			'w'		: w,
-			'h'		: h,
-			'data'	: data,
-			'mode'	: 'RGB'
+			'cmd'		: 'prepare',
+			'id'		: canvas.id,
+			'w'			: w,
+			'h'			: h,
+			'data'		: data,
+			'mode'		: 'RGB',
+			'compress'	: 'gzip'
 			}
 		self.send(d)
 
@@ -115,8 +126,9 @@ class screen(object):
 		data = self.sock.recv(2)
 		if data != 'ok':
 			raise osexception('Connection error!')
-		print('sent %d bytes to #%s in %d ms' % (len(msg), self.id,
-			1000.*(time.time()-t0)))
+		t1 = time.time()
+		print('[%d] sent %d bytes to #%s in %d ms' % (1000.*(t1-t00),
+			len(msg), self.id, 1000.*(t1-t0)))
 
 def add_screen(*args, **kwargs):
 
