@@ -2,6 +2,15 @@ description: Broadcast the screen to external devices
 category: "Miscellaneous"
 controls:
 -
+    type: "combobox"
+    var: "display_mode"
+    label: "Display mode"
+    options:
+    - "Enable main display"
+    - "Disable main display"
+    - "Disable broadcasted parts of main display"
+    tooltip: "Display mode"
+-
     type: "editor"
     var: "screens"
     label: "Screens"
