@@ -41,11 +41,11 @@ class broadcast(legacy.legacy):
 		legacy.legacy.__init__(self, *args, **kwargs)
 		self.prepared = False
 		self.id = _id
-		self.threads = []
 		_id += 1
 
 	def prepare(self):
 
+		self.threads = []
 		for screen in screens:
 			screen.prepare(self)
 			t = threading.Thread(target=screen.show, args=(self,))
@@ -60,6 +60,7 @@ class broadcast(legacy.legacy):
 			self.prepare()
 		for t in self.threads:
 			t.start()
+		self.prepared = False
 		return legacy.legacy.show(self)
 
 class screen(object):

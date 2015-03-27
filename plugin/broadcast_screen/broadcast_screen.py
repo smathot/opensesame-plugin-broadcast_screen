@@ -40,7 +40,7 @@ class broadcast_screen(item):
 			Resets plug-in to initial values.
 		"""
 
-		self.screens = u'localhost 0 0 [width] [height] 50008'
+		self.screens = u'localhost 0 0 [width] [height] 0 50008'
 
 	def prepare(self):
 
@@ -55,7 +55,7 @@ class broadcast_screen(item):
 			raise osexception(u'broadcast_screen requires the legacy backend')
 		# Load the broadcast canvas backend
 		mod = imp.load_source(u'broadcast',
-			os.path.join(os.path.dirname(__file__), u'broadcast_canvas.py'))
+			os.path.join(os.path.dirname(__file__), 'broadcast_canvas.py'))
 		sys.modules[u'openexp._canvas.broadcast'] = mod
 		self.experiment.set(u'canvas_backend', u'broadcast')
 		# Parse all screens
