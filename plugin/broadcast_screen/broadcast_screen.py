@@ -41,6 +41,7 @@ class broadcast_screen(item):
 		"""
 
 		self.screens = u'localhost 0 0 [width] [height] 0 50008'
+		self.display_mode = u'Enable main display'
 
 	def prepare(self):
 
@@ -57,6 +58,7 @@ class broadcast_screen(item):
 		mod = imp.load_source(u'broadcast',
 			os.path.join(os.path.dirname(__file__), 'broadcast_canvas.py'))
 		sys.modules[u'openexp._canvas.broadcast'] = mod
+		mod.set_display_mode(self.get(u'display_mode'))
 		self.experiment.set(u'canvas_backend', u'broadcast')
 		# Parse all screens
 		for line in self.get(u'screens').split(u'\n'):
