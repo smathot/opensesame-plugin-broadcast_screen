@@ -50,7 +50,6 @@ class broadcast(legacy.legacy):
 		legacy.legacy.__init__(self, *args, **kwargs)
 		self.prepared = False
 		self.id = _id
-		print self.experiment.get(u'background')
 		self.fill_color = self.color(self.experiment.get(u'background'))
 		_id += 1
 
@@ -83,7 +82,10 @@ class broadcast(legacy.legacy):
 		for t in self.threads:
 			t.start()
 		self.prepared = False
-		return legacy.legacy.show(self)
+		t0 = legacy.legacy.show(self)
+		for t in self.threads:
+			t.join()
+		return t0
 
 class screen(object):
 
