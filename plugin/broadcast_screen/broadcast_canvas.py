@@ -51,15 +51,26 @@ class broadcast(legacy.legacy):
 		self.prepared = False
 		self.id = _id
 		self.fill_color = self.color(self.experiment.get(u'background'))
+		self.threads = []
 		_id += 1
 
 	def prepare(self):
 
 		"""See openexp._canvas.canvas"""
 
+		if self.prepared:
+			return
+		# First create and launch threads to prepare the canvas
 		self.threads = []
 		for screen in screens:
-			screen.prepare(self)
+			t = threading.Thread(target=screen.prepare, args=(self,))
+			t.start()
+			self.threads.append(t)
+		for t in self.threads:
+			t.join()
+		# Next create threads to show the canvas, but don't show them yet
+		self.threads = []
+		for screen in screens:
 			t = threading.Thread(target=screen.show, args=(self,))
 			self.threads.append(t)
 		random.shuffle(screens)
@@ -71,7 +82,7 @@ class broadcast(legacy.legacy):
 			for screen in screens:
 				self.surface.fill(self.fill_color, screen.rect())
 		self.prepared = True
-		return legacy.legacy.prepare(self)
+		legacy.legacy.prepare(self)
 
 	def show(self):
 
@@ -82,10 +93,7 @@ class broadcast(legacy.legacy):
 		for t in self.threads:
 			t.start()
 		self.prepared = False
-		t0 = legacy.legacy.show(self)
-		for t in self.threads:
-			t.join()
-		return t0
+		return legacy.legacy.show(self)
 
 class screen(object):
 
@@ -136,6 +144,7 @@ class screen(object):
 		self.w = w
 		self.h = h
 		self.rot = rot
+		self.lock = threading.Lock()
 
 	def rect(self):
 
@@ -229,8 +238,10 @@ class screen(object):
 
 		msg = json.dumps(d)
 		t0 = time.time()
+		self.lock.acquire()
 		self.sock.sendall('%d:%s' % (len(msg), msg))
 		data = self.sock.recv(2)
+		self.lock.release()
 		if data != 'ok':
 			raise osexception('Connection error!')
 		t1 = time.time()
