@@ -33,6 +33,9 @@ screens = []
 display_mode = 0
 _id = 0
 t00 = time.time()
+_exception = None
+cid = 0
+show_threads = []
 
 class broadcast(legacy.legacy):
 
@@ -58,8 +61,12 @@ class broadcast(legacy.legacy):
 
 		"""See openexp._canvas.canvas"""
 
+		global show_threads
 		if self.prepared:
 			return
+		for t in show_threads:
+			t.join()
+		show_threads = []
 		# First create and launch threads to prepare the canvas
 		self.threads = []
 		for screen in screens:
@@ -82,17 +89,23 @@ class broadcast(legacy.legacy):
 			for screen in screens:
 				self.surface.fill(self.fill_color, screen.rect())
 		self.prepared = True
+		if _exception is not None:
+			raise osexception(_exception)
 		legacy.legacy.prepare(self)
 
 	def show(self):
 
 		"""See openexp._canvas.canvas"""
 
+		global show_threads
 		if not self.prepared:
 			self.prepare()
 		for t in self.threads:
 			t.start()
+			show_threads.append(t)
 		self.prepared = False
+		if _exception is not None:
+			raise osexception(_exception)
 		return legacy.legacy.show(self)
 
 class screen(object):
@@ -236,17 +249,24 @@ class screen(object):
 				type:	dict
 		"""
 
-		msg = json.dumps(d)
-		t0 = time.time()
+		global _exception, cid
 		self.lock.acquire()
-		self.sock.sendall('%d:%s' % (len(msg), msg))
-		data = self.sock.recv(2)
+		d['cid'] = cid
+		msg = json.dumps(d)
+		cid += 1
+		try:
+			self.sock.sendall('%d:%s' % (len(msg), msg))
+		except Exception as e:
+			_exception = e
+		try:
+			data = self.sock.recv(2)
+		except Exception as e:
+			_exception = e
 		self.lock.release()
 		if data != 'ok':
 			raise osexception('Connection error!')
-		t1 = time.time()
-		print('[%d] sent %d bytes to #%s in %d ms' % (1000.*(t1-t00),
-			len(msg), self.id, 1000.*(t1-t0)))
+		print('sent %s to #%s (%d bytes, cid #%d)' % (d['cmd'], self.id,
+			len(msg), d['cid']))
 
 def add_screen(*args, **kwargs):
 
@@ -263,7 +283,10 @@ def close_display(exp):
 	desc:
 		Closes the display and all remote screens.
 	"""
-
+	global show_threads
+	for t in show_threads:
+		t.join()
+	show_threads = []
 	for screen in screens:
 		screen.close()
 	legacy.close_display(exp)
