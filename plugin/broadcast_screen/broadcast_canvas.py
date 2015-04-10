@@ -53,6 +53,7 @@ class broadcast(legacy.legacy):
 		legacy.legacy.__init__(self, *args, **kwargs)
 		self.prepared = False
 		self.id = _id
+		self.background = self.experiment.get(u'background')
 		self.fill_color = self.color(self.experiment.get(u'background'))
 		self.threads = []
 		_id += 1
@@ -157,7 +158,24 @@ class screen(object):
 		self.w = w
 		self.h = h
 		self.rot = rot
+		self.last_cmd = time.time()
+		self.alive = True
+		self.ping_delay = 0.1 # In seconds
 		self.lock = threading.Lock()
+		self.ping_thread = threading.Thread(target=self.ping)
+		self.ping_thread.start()
+
+	def ping(self):
+
+		"""
+		desc:
+			Sends a regular ping to the devices to keep the connection alive.
+		"""
+
+		while self.alive:
+			if time.time() - self.last_cmd > self.ping_delay:
+				self.send({'cmd' : 'ping'})
+			time.sleep(self.ping_delay)
 
 	def rect(self):
 
@@ -202,7 +220,7 @@ class screen(object):
 			'data'			: data,
 			'mode'			: 'RGB',
 			'compress'		: 'gzip',
-			'background'	: canvas.experiment.get(u'background')
+			'background'	: canvas.background
 			}
 		self.send(d)
 
@@ -234,6 +252,7 @@ class screen(object):
 
 		debug.msg('close #%s' % self.id)
 		d = { 'cmd'	: 'close' }
+		self.alive = False
 		self.send(d)
 		self.sock.close()
 
@@ -251,6 +270,7 @@ class screen(object):
 
 		global _exception, cid
 		self.lock.acquire()
+		self.last_cmd = time.time()
 		d['cid'] = cid
 		msg = json.dumps(d)
 		cid += 1
@@ -262,6 +282,7 @@ class screen(object):
 			data = self.sock.recv(2)
 		except Exception as e:
 			_exception = e
+		self.last_cmd = time.time()
 		self.lock.release()
 		if data != 'ok':
 			raise osexception('Connection error!')
