@@ -1,0 +1,68 @@
+---
+API: 2
+OpenSesame: 3.1.7a2
+Platform: posix
+---
+set width 1024
+set uniform_coordinates yes
+set title send_screen
+set subject_parity even
+set subject_nr 0
+set start experiment
+set sound_sample_size -16
+set sound_freq 48000
+set sound_channels 2
+set sound_buf_size 1024
+set sampler_backend legacy
+set round_decimals 2
+set mouse_backend legacy
+set keyboard_backend legacy
+set height 768
+set fullscreen no
+set form_clicks no
+set foreground white
+set font_underline no
+set font_size 18
+set font_italic no
+set font_family mono
+set font_bold no
+set experiment_path "/home/sebastiaan/git/opensesame-plugin-broadcast_screen/experiments"
+set disable_garbage_collection yes
+set description "The main experiment item"
+set coordinates uniform
+set compensation 0
+set color_backend legacy
+set clock_backend legacy
+set canvas_backend legacy
+set bidi no
+set background black
+
+define broadcast_screen broadcast_screen
+	__screens__
+	192.168.2.2 0 0 412 [height] 0 50008
+	192.168.2.4 612 0 412 [height] 0 50008
+	__end__
+	set display_mode "Disable broadcasted parts of main display"
+	set description "Broadcast the screen to external devices"
+
+define sequence experiment
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+	run broadcast_screen always
+	run screen1 always
+	run screen2 always
+
+define sketchpad screen1
+	set start_response_interval no
+	set reset_variables no
+	set duration keypress
+	set description "Displays stimuli"
+	draw textline center=1 color=white font_bold=no font_family=serif font_italic=no font_size=32 html=yes show_if=always text="You should now see this on the receiver!<br /><br />Press any key to the next screen" x=0 y=0 z_index=0
+	draw circle color=green fill=1 penwidth=1 r=71.55417528 show_if=always x=-288 y=-192 z_index=0
+	draw circle color=red fill=1 penwidth=1 r=71.55417528 show_if=always x=288 y=-192 z_index=0
+
+define sketchpad screen2
+	set duration keypress
+	set description "Displays stimuli"
+	draw textline center=1 color=white font_bold=no font_family=serif font_italic=no font_size=32 html=yes show_if=always text="Press any key to exit!" x=0 y=0 z_index=0
+

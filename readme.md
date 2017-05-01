@@ -1,6 +1,6 @@
 # OpenSesame broadcast screen plug-in
 
-Copyright, 2015, Sebastiaan Mathôt
+Copyright, 2015-2017, Sebastiaan Mathôt
 
 <http://www.cogsci.nl/smathot>
 

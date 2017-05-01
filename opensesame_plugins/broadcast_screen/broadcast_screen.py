@@ -40,8 +40,8 @@ class broadcast_screen(item):
 			Resets plug-in to initial values.
 		"""
 
-		self.screens = u'localhost 0 0 [width] [height] 0 50008'
-		self.display_mode = u'Enable main display'
+		self.var.screens = u'localhost 0 0 [width] [height] 0 50008'
+		self.var.display_mode = u'Enable main display'
 
 	def prepare(self):
 
@@ -52,16 +52,16 @@ class broadcast_screen(item):
 
 		item.prepare(self)
 		# Check that we're using the legacy back-end
-		if self.get(u'canvas_backend') != u'legacy':
+		if self.var.canvas_backend != u'legacy':
 			raise osexception(u'broadcast_screen requires the legacy backend')
 		# Load the broadcast canvas backend
 		mod = imp.load_source(u'broadcast',
 			os.path.join(os.path.dirname(__file__), 'broadcast_canvas.py'))
 		sys.modules[u'openexp._canvas.broadcast'] = mod
-		mod.set_display_mode(self.get(u'display_mode'))
+		mod.set_display_mode(self.var.display_mode)
 		self.experiment.set(u'canvas_backend', u'broadcast')
 		# Parse all screens
-		for line in self.get(u'screens').split(u'\n'):
+		for line in self.var.screens.split(u'\n'):
 			l = line.strip().split()
 			if len(l) == 0 or line.startswith(u'#'):
 				continue

@@ -18,6 +18,7 @@ along with OpenSesame.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from openexp._canvas import legacy
+from openexp.color import color
 from libopensesame.exceptions import osexception
 from libopensesame import debug
 import random
@@ -53,8 +54,9 @@ class broadcast(legacy.legacy):
 		legacy.legacy.__init__(self, *args, **kwargs)
 		self.prepared = False
 		self.id = _id
-		self.background = self.experiment.get(u'background')
-		self.fill_color = self.color(self.experiment.get(u'background'))
+		self.background = self.experiment.var.background
+		self.fill_color = color(self.experiment,
+			self.experiment.var.background)
 		self.threads = []
 		_id += 1
 
@@ -84,11 +86,11 @@ class broadcast(legacy.legacy):
 		random.shuffle(screens)
 		# Disable main display
 		if display_mode == 1:
-			self.surface.fill(self.fill_color)
+			self.surface.fill(self.fill_color.backend_color)
 		# Cut out broadcasted parts
 		elif display_mode == 2:
 			for screen in screens:
-				self.surface.fill(self.fill_color, screen.rect())
+				self.surface.fill(self.fill_color.backend_color, screen.rect())
 		self.prepared = True
 		if _exception is not None:
 			raise osexception(_exception)
